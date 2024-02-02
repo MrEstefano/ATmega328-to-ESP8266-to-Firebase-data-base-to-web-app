@@ -1,10 +1,11 @@
 /***********************************************************************************/
-/*    program name:     From ATmega328 to ESP8266 to Real time database 
+/*    program name:     From ESP8266 to Real time database 
 /*    programer name:   Stefan Zakutansky
 /*    date:             2nd February 2024
-/*    program function: Receive data from ATmega328 with start anfd and
-/*                      end-markers combined. Once separated, wrap all together and 
-/*                      and send it to data base 
+/*    Upload to:        ESP8266
+/*    program function: Receive data from ATmega328 with start and end-markers
+/*                      combined. Once separated, manipulate and wrap all together
+/*                      for sending it to data base via WIFI
 /*    Credits to:       Rui Santos, Robin2, JANAK13
 /*
 /************************************************************************************/
