@@ -4,7 +4,7 @@
 /*    date:             2nd February 2024
 /*    program function: Receive data from BMP280+AHT20 sensor and send it to ESP8266
 /*                      via softeare serial with start anfd and
-/*                      end-markers combined. Once separated, wrap all together and 
+/*                      end-markers combined. Once separated, wrap all together and  
 /*                      and send it to data base 
 /*    Credits to: maxpromer, adafruit, adafruit, JANAK13
 /*
