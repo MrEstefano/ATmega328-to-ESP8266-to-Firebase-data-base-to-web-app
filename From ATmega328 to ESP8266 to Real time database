@@ -166,26 +166,28 @@ void loop(){
   //check if data are comming through and if previous data already sent
   if (ArduinoUno.available()>0 && newData == false){
     //store incoming
-    rc = ArduinoUno.read();
-    //figgure out the start of the incoming strinhg 
-    if (recvInProgress == true) {
-        if (rc != endMarker) {
-            receivedChars[ndx] = rc;
-            ndx++;
-            if (ndx >= numChars) {
-                ndx = numChars - 1;
-            }
+    while (ArduinoUno.available()>0){
+      rc = ArduinoUno.read();
+      //figgure out the start of the incoming strinhg 
+      if (recvInProgress == true) {
+          if (rc != endMarker) {
+              receivedChars[ndx] = rc;
+              ndx++;
+              if (ndx >= numChars) {
+                  ndx = numChars - 1;
+              }
+          }
+          else {
+              receivedChars[ndx] = '\0'; // terminate the string
+              recvInProgress = false;
+              ndx = 0;
+              newData = true;
+          }
         }
-        else {
-            receivedChars[ndx] = '\0'; // terminate the string
-            recvInProgress = false;
-            ndx = 0;
-            newData = true;
-        }
+        else if (rc == startMarker) {
+            recvInProgress = true;
+        }  
       }
-      else if (rc == startMarker) {
-          recvInProgress = true;
-      }  
     }
 
   if (newData == true ){
