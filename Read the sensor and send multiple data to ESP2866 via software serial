@@ -1,0 +1,109 @@
+/*******************************************************************************************/
+/*    program name:     Read the sensor and send multiple data to ESP2866 via software serial
+/*    programer name:   Stefan Zakutansky
+/*    date:             2nd February 2024
+/*    program function: Receive data from BMP280+AHT20 sensor and send it to ESP8266
+/*                      via softeare serial with start anfd and
+/*                      end-markers combined. Once separated, wrap all together and 
+/*                      and send it to data base 
+/*    Credits to: maxpromer, adafruit, adafruit, JANAK13
+/*
+/********************************************************************************************/
+
+#include <Wire.h>
+#include <SoftwareSerial.h>
+#include <Adafruit_BMP280.h>
+#include <Adafruit_AHTX0.h>
+
+#define RX 3
+#define TX 2
+
+//declaring software objects in class
+SoftwareSerial esp(RX,TX);  //3=rx   2=tx
+Adafruit_BMP280 bmp;   //software objects
+Adafruit_AHTX0 aht;
+Adafruit_Sensor *aht_humidity, *aht_temp;
+
+//variables
+float pressure;
+unsigned long sendDataPrevMillis = 0;
+unsigned long timerDelay = 9000;
+
+void setup() {
+  //start hardware serial coms
+  Serial.begin(115200);
+  //start software serial coms
+  esp.begin(9600);
+  //declare pin functions
+  pinMode (RX,INPUT);
+  pinMode (TX,OUTPUT);
+  //check if software serial working
+  while (!Serial)
+    delay(10); 
+  //check if AHT20 sensor working
+  Serial.println("Adafruit AHT10/AHT20 test!");
+  if (!aht.begin()) {
+    Serial.println("Failed to find AHT10/AHT20 chip");
+    while (1) {
+      Serial.println("AHT10/AHT20 Found!");
+      delay(10);
+    }
+  }
+
+  Serial.println("AHT10/AHT20 Found!");
+  aht_temp = aht.getTemperatureSensor();
+  aht_temp->printSensorDetails();
+
+  aht_humidity = aht.getHumiditySensor();
+  aht_humidity->printSensorDetails();
+  //check if BMP280 sensor working
+  if (!bmp.begin()) {
+    Serial.println(F("Could not find a valid BMP280 sensor, check wiring!"));
+    while (1);
+  }
+  /* Default settings from datasheet. */
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+}
+
+void  loop() {
+  /* Get a new normalized sensor event */
+  pressure = bmp.readPressure()/100;  
+  sensors_event_t humidity;
+  sensors_event_t temp;
+  aht_humidity->getEvent(&humidity);
+  aht_temp->getEvent(&temp);
+  //keep printing on hardware serial, to see if we getting data from sensors, send every nine seconds
+  if (millis() - sendDataPrevMillis > timerDelay || sendDataPrevMillis == 0){
+    sendDataPrevMillis = millis();
+    //print to hardware serial monitor for verification that data is being recieved from sensor
+    Serial.print("\t\tTemperature ");
+    Serial.print(temp.temperature);
+    Serial.println(" deg C");
+    // Display the results (humidity is measured in % relative humidity (% rH) */
+    Serial.print("\t\tHumidity: ");
+    Serial.print(humidity.relative_humidity);
+    Serial.println(" % rH");
+    //BMP280 readings
+    Serial.print("\t\tPressure: ");
+    Serial.print(pressure);
+    Serial.println(" hPa");  
+    Serial.println(" "); 
+    //build a string starting with "<"  3 different values separated by coma, and finish with ">"
+    // somethink like that <HelloWorld, 12, 24.7>
+    // send via software setrial to ESP8266
+    //this could be sent every 15 sec, using millis() delay
+    esp.print("<");
+    esp.print(temp.temperature);
+    esp.print(", ");
+    esp.print(humidity.relative_humidity);
+    esp.print(", ");
+    esp.print(pressure);
+    esp.print(">");  
+  }
+}
+
+
